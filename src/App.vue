@@ -1,26 +1,109 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div class="app-container">
+    <!-- 使用 OpenIM SDK 的主组件 -->
+    <OpenIMApp 
+      :user-id="userId"
+      :initial-page="initialPage"
+      :enable-auto-login="false"
+      @page-change="onPageChange"
+    />
+    <!-- 测试发送消息按钮 -->
+    <button 
+      class="test-send-btn"
+      @click="testSendMessage"
+    >
+      测试发送消息
+    </button>
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
+import { OpenIMApp, PageState, useSendMessage, IMSDK } from 'open-im-sdk'
 
 export default {
   name: 'App',
   components: {
-    HelloWorld
-  }
+    OpenIMApp,
+  },
+  setup() {
+    // 引入 useSendMessage
+    const { sendMessage } = useSendMessage()
+
+    // 测试发送消息方法
+    const testSendMessage = async () => {
+      try {
+        // 1. 创建文本消息
+        const { data: message } = await IMSDK.createTextMessage('Hello, 这是一条测试消息!')
+        console.log('创建消息成功:', message)
+
+        // 2. 发送消息给指定用户
+        await sendMessage({
+          message,
+          recvID: '8075099339',
+        })
+        console.log('消息发送成功!')
+        alert('消息发送成功!')
+      } catch (error) {
+        console.error('发送消息失败:', error)
+        alert('发送消息失败: ' + error.message)
+      }
+    }
+
+    return {
+      sendMessage,
+      testSendMessage,
+    }
+  },
+  data() {
+    return {
+      userId: '8075099339',  // 用户ID
+      initialPage: PageState.LOGIN,
+    }
+  },
+  methods: {
+    onPageChange(page) {
+      console.log('Page changed to:', page)
+    },
+  },
 }
 </script>
 
 <style>
+/* 确保应用占满全屏 */
+html,
+body,
 #app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+.app-container {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.test-send-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 12px 24px;
+  background-color: #1890ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 9999;
+}
+
+.test-send-btn:hover {
+  background-color: #40a9ff;
+}
+
+.test-send-btn:active {
+  background-color: #096dd9;
 }
 </style>
