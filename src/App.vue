@@ -18,7 +18,8 @@
 </template>
 
 <script>
-import { OpenIMApp, PageState, useSendMessage, IMSDK } from 'open-im-sdk'
+import { onMounted, onUnmounted } from 'vue'
+import { OpenIMApp, PageState, useSendMessage, IMSDK, onSendMessage, onReceiveMessage } from 'open-im-sdk'
 
 export default {
   name: 'App',
@@ -28,6 +29,38 @@ export default {
   setup() {
     // 引入 useSendMessage
     const { sendMessage } = useSendMessage()
+
+    // 注册消息回调
+    let unsubscribeSend = null
+    let unsubscribeReceive = null
+
+    onMounted(() => {
+      // 注册发送消息回调
+      unsubscribeSend = onSendMessage(({ message, status, recvID, groupID, error }) => {
+        console.log('发送消息回调:', { 
+          content: message.textElem?.content || message.contentType,
+          status,
+          recvID,
+          groupID,
+          error 
+        })
+      })
+
+      // 注册接收消息回调
+      unsubscribeReceive = onReceiveMessage(({ message, isCurrentConversation }) => {
+        console.log('收到新消息:', {
+          content: message.textElem?.content || message.contentType,
+          sendID: message.sendID,
+          isCurrentConversation,
+        })
+      })
+    })
+
+    onUnmounted(() => {
+      // 组件卸载时取消注册
+      unsubscribeSend?.()
+      unsubscribeReceive?.()
+    })
 
     // 测试发送消息方法
     const testSendMessage = async () => {
@@ -42,7 +75,6 @@ export default {
           recvID: '8075099339',
         })
         console.log('消息发送成功!')
-        alert('消息发送成功!')
       } catch (error) {
         console.error('发送消息失败:', error)
         alert('发送消息失败: ' + error.message)
